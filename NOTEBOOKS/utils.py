@@ -81,10 +81,10 @@ def filt(ytmp, cutoff_dt, dt, btype='low', order=8, ftype='sos', axis=-1):
         return signal.filtfilt(b, a, ytmp, axis=axis)
 
 
-def filt_decompose(xraw, dt, b1=34*3600, b2=4*3600):
-    x1 = filt(xraw,b1, dt, btype='low')
-    x2 = filt(xraw, [b1,b2], dt, btype='band')
-    x3 = filt(xraw, b2, dt, btype='high')
+def filt_decompose(xraw, dt, b1=34*3600, b2=4*3600, order=8, ftype='sos', axis=-1):
+    x1 = filt(xraw,b1, dt, btype='low', order=8, ftype='sos', axis=-1)
+    x2 = filt(xraw, [b1,b2], dt, btype='band', order=8, ftype='sos', axis=-1)
+    x3 = filt(xraw, b2, dt, btype='high', order=8, ftype='sos', axis=-1)
     
     xin = np.vstack([x1,x2,x3]).T
     
