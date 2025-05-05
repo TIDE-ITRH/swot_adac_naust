@@ -69,9 +69,9 @@ def filt(ytmp, cutoff_dt, dt, btype='low', order=8, ftype='sos', axis=-1):
         btype - 'low' or 'high' or 'band'
     """
     if not btype == 'band':
-        Wn = dt/cutoff_dt
+        Wn = 2*dt/cutoff_dt
     else:
-        Wn = [dt/co for co in cutoff_dt]
+        Wn = [2*dt/co for co in cutoff_dt]
     
     if ftype=='sos':
         sos = signal.butter(order, Wn, btype, analog=False, output='sos')
@@ -82,9 +82,9 @@ def filt(ytmp, cutoff_dt, dt, btype='low', order=8, ftype='sos', axis=-1):
 
 
 def filt_decompose(xraw, dt, b1=34*3600, b2=4*3600, order=8, ftype='sos', axis=-1):
-    x1 = filt(xraw,b1, dt, btype='low', order=8, ftype='sos', axis=-1)
-    x2 = filt(xraw, [b1,b2], dt, btype='band', order=8, ftype='sos', axis=-1)
-    x3 = filt(xraw, b2, dt, btype='high', order=8, ftype='sos', axis=-1)
+    x1 = filt(xraw,b1, dt, btype='low', order=order, ftype=ftype, axis=-1)
+    x2 = filt(xraw, [b1,b2], dt, btype='band', order=order, ftype=ftype, axis=-1)
+    x3 = filt(xraw, b2, dt, btype='high', order=order, ftype=ftype, axis=-1)
     
     xin = np.vstack([x1,x2,x3]).T
     
