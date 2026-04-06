@@ -5,7 +5,44 @@ import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 
+###
+# Data
+uvdir = '/data/SWOT_Cruise/FV02/stacked_moorings_adcp'
+tdir = '/data/SWOT_Cruise/FV02/stacked_moorings_tp'
+etadir = '../DATA/'
 
+sites = {}
+
+sites.update({'W310':
+              {'uvfile':f'{uvdir}/[BB23]_[BB23_REC]_[W310]_[multi(2)_nominal_instrument_height_asb]_[multi(2)_instrument_model]_[multi(2)_instrument_serial_number]_[no_outfile_append].nc',
+              'tfile': f'{tdir}/[BB23]_[BB23_REC]_[W310]_[multi(27)_nominal_instrument_height_asb]_[multi(5)_instrument_model]_[multi(27)_instrument_serial_number]_[no_outfile_append].nc',
+              'sig1000file':'/data/SWOT_Cruise/Signature1000/BB23_W310_VEL_BM_ENU_stacked.nc',
+              'etafile': f'{etadir}/mooring_sealevel_W310_v3.nc' ,
+              'z_bot':-314,
+              'color':'#1f77b4',
+              }
+             })
+
+sites.update({'S245':
+              {'uvfile':f'{uvdir}/[BB23]_[BB23_REC]_[S245]_[5]_[Quartermaster]_[11795]_[no_outfile_append].nc',
+              'tfile': f'{tdir}/[BB23]_[BB23_REC]_[S245]_[multi(35)_nominal_instrument_height_asb]_[multi(2)_instrument_model]_[multi(35)_instrument_serial_number]_[no_outfile_append].nc',
+              'sig1000file':'/data/SWOT_Cruise/Signature1000/BB23_S245_VEL_BM_ENU_stacked.nc',
+              'etafile': f'{etadir}/mooring_sealevel_S245_v3.nc' ,
+              'z_bot':-254,
+              'color':'#ff7f0e',
+              }
+             })
+
+sites.update({'N280':
+              {'uvfile':f'{uvdir}/[BB23]_[BB23_REC]_[N280]_[5]_[Longranger]_[24613]_[no_outfile_append].nc',
+              'tfile': f'{tdir}/[BB23]_[BB23_REC]_[N280]_[multi(27)_nominal_instrument_height_asb]_[multi(3)_instrument_model]_[multi(27)_instrument_serial_number]_[no_outfile_append].nc',
+              'etafile': f'{etadir}/mooring_steric_ssh_N280_v4.nc',
+              'z_bot':-280,
+              'color':'#d62728'
+              }
+             })
+
+###
 
 
 def plot_swot_basemap(ax, xlims, ylims, fine_contours=False, swath=True):
@@ -89,3 +126,67 @@ def filt_decompose(xraw, dt, b1=34*3600, b2=4*3600, order=8, ftype='sos', axis=-
     xin = np.vstack([x1,x2,x3]).T
     
     return xin
+
+#From: https://github.com/SWOT-community/SWOT-OpenToolkit/blob/main/src/swot_ssh_utils.py
+import scipy.interpolate
+def interp_expert_to_unsmoothed(
+        expert_lon, expert_lat, expert_var, unsmoothed_lon, unsmoothed_lat):
+    """
+    Interpolates expert_var to unsmoothed grid
+
+    expert_lon, expert_lat, expert_var should be 2D numpy mask arrays read in
+    from the Expert product
+
+    unsmoothed_lon, unsmoothed_lat should be 2D numpy mask arrays read in
+    from the Unsmoothed product
+
+    Here is an example:
+    fp_exp = netCDF4.Dataset(expert_file)
+    fp_un = netCDF4.Dataset(unsmoothed_file)
+
+    expert_lon = fp_exp['longitude'][:]
+    expert_lat = fp_exp['latitude'][:]
+    expert_var = fp_exp['swh_model'][:]
+    unsmoothed_lon = fp_un['left']['longitude'][:]
+    unsmoothed_lat = fp_un['left']['longitude'][:]
+
+    unsmoothed_var = swot_ssh_utils.interp_expert_to_unsmoothed(
+            expert_lon, expert_lat, expert_var, unsmoothed_lon, unsmoothed_lat)
+
+    Author (s): Alex Fore
+    """
+    # if not (np.ma.isMaskedArray(expert_var) and
+    #         np.ma.isMaskedArray(expert_lon) and
+    #         np.ma.isMaskedArray(expert_lat)):
+    #     raise Exception((
+    #         "Please pass in expert_lon, expert_lat, and expert_var as numpy "
+    #         "mask arrays."))
+
+    if not (len(expert_var.shape) == 2 and
+            len(expert_lon.shape) == 2 and
+            len(expert_lat.shape) == 2):
+        raise Exception((
+            "Please pass in expert_lon, expert_lat, and expert_var as full "
+            "2D arrays as they are in the Expert file."))
+
+    mask = ~np.ma.getmaskarray(expert_var)
+    var_in = expert_var[mask].data
+    lon_in = expert_lon[mask].data
+    lat_in = expert_lat[mask].data
+
+    unsmoothed_mask = np.logical_and(
+        ~np.ma.getmaskarray(unsmoothed_lon),
+        ~np.ma.getmaskarray(unsmoothed_lat))
+
+    # Center longitude on median longitude
+    center_lon = np.median(lon_in)
+    lon_in -= center_lon
+    unsmoothed_lon_in = unsmoothed_lon[unsmoothed_mask] - center_lon
+
+    unsmoothed_var = np.ones(unsmoothed_lon.shape) * np.nan
+    unsmoothed_var[unsmoothed_mask] = scipy.interpolate.griddata(
+        (lon_in, lat_in), var_in,
+        (unsmoothed_lon_in, unsmoothed_lat[unsmoothed_mask]),
+        method='linear', fill_value=np.nan)
+
+    return unsmoothed_var
