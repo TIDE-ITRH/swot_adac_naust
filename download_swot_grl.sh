@@ -7,7 +7,7 @@ local=/data/SWOT_Cruise/GRL_archive/SWOT/
 
 PASS=021
 
-for CYCLE in 500 501 502 504 511 513 514 515 521 523 524 532 533;do
+for CYCLE in 500 501 502 503 504 511 513 514 515 521 523 524 532 533;do
     include="cycle_"$CYCLE"/*_"$PASS"_*.nc"
     echo $include
 
