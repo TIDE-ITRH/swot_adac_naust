@@ -1,5 +1,7 @@
 #####
-# Unsmoothed data
+# Download unsmoothed SWOT data
+#
+# This requires configuring ftp-access.aviso.altimetry.fr as the aviso: drive in rclone
 #####
 MYGROUP=~/
 
